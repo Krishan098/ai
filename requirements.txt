@@ -1,0 +1,12 @@
+streamlit
+torch
+transformers
+plotly
+torchcodec
+librosa
+pandas
+scikit-learn
+seaborn
+matplotlib
+numpy
+pandas
