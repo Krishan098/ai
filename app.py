@@ -27,13 +27,13 @@ class MERTAudioAnalyzer:
                       'electronic', 'country', 'metal', 'blues', 'reggae']
     
     @st.cache_resource
-    def setup_model(_self):
+    def setup_model(self):
         """Initialize the MERT model and processor"""
-        _self.processor = AutoProcessor.from_pretrained(_self.model_id, trust_remote_code=True)
-        _self.model = AutoModel.from_pretrained(_self.model_id, trust_remote_code=True)
-        _self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        _self.model = _self.model.to(_self.device)
-        _self.model.eval()
+        self.processor = AutoProcessor.from_pretrained(self.model_id, trust_remote_code=True)
+        self.model = AutoModel.from_pretrained(self.model_id, trust_remote_code=True)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = self.model.to(self.device)
+        self.model.eval()
     
     def train_genre_classifier(self, features, labels):
         """Train a simple genre classifier"""
