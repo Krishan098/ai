@@ -6,34 +6,43 @@ import librosa
 import os
 import tempfile
 import plotly.express as px
-import plotly.graph_objects as go
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-import io
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# ----------------------------
+# Cached Model Loader
+# ----------------------------
+@st.cache_resource
+def load_mert_model(model_id: str):
+    """Load and cache the MERT model + processor"""
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+    model = AutoModel.from_pretrained(model_id, trust_remote_code=True)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    model.eval()
+    return processor, model, device
+
+# ----------------------------
+# Analyzer Class
+# ----------------------------
 class MERTAudioAnalyzer:
     def __init__(self):
         self.model_id = "m-a-p/MERT-v1-330M"
         self.max_duration = 30.0
         self.genre_classifier = None
-        self.setup_model()
         
+        # Load cached resources
+        self.processor, self.model, self.device = load_mert_model(self.model_id)
+
         # Define genre labels
-        self.genres = ['rock', 'pop', 'hip hop', 'classical', 'jazz', 
-                      'electronic', 'country', 'metal', 'blues', 'reggae']
-    
-    @st.cache_resource
-    def setup_model(self):
-        """Initialize the MERT model and processor"""
-        self.processor = AutoProcessor.from_pretrained(self.model_id, trust_remote_code=True)
-        self.model = AutoModel.from_pretrained(self.model_id, trust_remote_code=True)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = self.model.to(self.device)
-        self.model.eval()
+        self.genres = [
+            'rock', 'pop', 'hip hop', 'classical', 'jazz',
+            'electronic', 'country', 'metal', 'blues', 'reggae'
+        ]
     
     def train_genre_classifier(self, features, labels):
         """Train a simple genre classifier"""
@@ -126,7 +135,9 @@ class MERTAudioAnalyzer:
         
         return np.array(similarities)
 
+# ----------------------------
 # Streamlit UI
+# ----------------------------
 def main():
     st.set_page_config(
         page_title="MERT Audio Analyzer",
@@ -158,6 +169,9 @@ def main():
     elif task == "Batch Processing":
         batch_processing(analyzer)
 
+# ----------------------------
+# Task Functions
+# ----------------------------
 def single_audio_analysis(analyzer):
     st.header("Single Audio Analysis")
     
@@ -203,7 +217,6 @@ def single_audio_analysis(analyzer):
 def genre_classification(analyzer):
     st.header("Genre Classification")
     
-    # Upload training data if classifier not trained
     if analyzer.genre_classifier is None:
         st.info("Upload training examples for each genre to train the classifier")
         
@@ -228,7 +241,6 @@ def genre_classification(analyzer):
             analyzer.train_genre_classifier(np.array(features_list), genre_labels)
             st.success("Genre classifier trained successfully!")
     
-    # Genre prediction
     audio_file = st.file_uploader("Upload audio for genre classification", 
                                  type=['wav', 'mp3', 'ogg'])
     
@@ -242,7 +254,6 @@ def genre_classification(analyzer):
             st.audio(audio_file)
             st.subheader(f"Predicted Genre: {predicted_genre}")
             
-            # Genre probabilities
             fig = px.bar(x=analyzer.genres, y=probabilities,
                         title="Genre Probabilities",
                         labels={'x': 'Genre', 'y': 'Probability'})
@@ -318,6 +329,7 @@ def batch_processing(analyzer):
             "audio_analysis_results.csv",
             "text/csv"
         )
+
 
 if __name__ == "__main__":
     main()
