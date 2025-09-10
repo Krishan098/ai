@@ -119,9 +119,27 @@ st.markdown("Advanced audio analysis using the MERT-v1-330M model for music unde
 # Initialize analyzer
 @st.cache_resource
 def load_analyzer():
-    return MERTAudioAnalyzer()
+    try:
+        return MERTAudioAnalyzer()
+    except Exception as e:
+        st.error("Failed to load MERT model. This might be due to missing dependencies.")
+        st.code("""
+# Install required dependencies:
+pip install nnAudio==0.3.2
+pip install torch torchaudio
+pip install transformers>=4.21.0
+""")
+        st.stop()
 
-with st.spinner("Loading MERT model..."):
+# Show installation instructions
+st.info("""
+📋 **Required Dependencies for MERT:**
+```bash
+pip install nnAudio==0.3.2 torch torchaudio transformers>=4.21.0 librosa plotly pandas scikit-learn
+```
+""")
+
+with st.spinner("Loading MERT model... (This may take a few minutes on first run)"):
     analyzer = load_analyzer()
 
 st.success("✅ MERT model loaded successfully!")
