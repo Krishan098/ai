@@ -15,7 +15,7 @@ import seaborn as sns
 
 class MERTAudioAnalyzer:
     def __init__(self):
-        self.model_id = "m-a-p/MERT-v1-330M"
+        self.model_id = "m-a-p/MERT-v1-95M"
         self.max_duration = 30.0
         self.setup_model()
     
